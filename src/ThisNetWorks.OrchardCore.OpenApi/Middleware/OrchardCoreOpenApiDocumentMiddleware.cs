@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Http;
+using NJsonSchema;
 using NSwag.AspNetCore;
 using NSwag.AspNetCore.Middlewares;
 using System;
@@ -19,8 +20,9 @@ namespace ThisNetWorks.OrchardCore.OpenApi.Middleware
             // We will need a cache provider, that can handle clearing cache from Scoped events.
             //try
             //{
-            var json = (await GenerateDocumentAsync(context)).ToJson();
-
+            var doc = await GenerateDocumentAsync(context);
+            
+            var json = doc.ToJson(SchemaType.OpenApi3, Newtonsoft.Json.Formatting.None);
             return json;
             //}
         }

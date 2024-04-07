@@ -15,7 +15,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="NJsonSchema" />
+    <PackageReference Include="NJsonSchema" Version="11.0.0" />
     <PackageReference Include="NSwag.AspNetCore" />
     <PackageReference Include="OrchardCore.ContentManagement.Abstractions" />
   </ItemGroup>

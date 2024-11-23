@@ -1,74 +1,50 @@
-﻿using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using Newtonsoft.Json.Serialization;
-using System;
+﻿using System;
+using System.Text.Json;
+using System.Text.Json.Nodes;
+using System.Text.Json.Serialization;
 using ThisNetWorks.OrchardCore.OpenApi.Models;
 using ThisNetWorks.OrchardCore.OpenApi.Extensions;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json.Settings;
+using JsonMergeSettings = System.Text.Json.Settings.JsonMergeSettings;
 
 namespace OrchardCore.ContentManagement
 {
     public static class ContentDtoExtensions
     {
-        private static JsonSerializerSettings Formatter = new JsonSerializerSettings
+        private static JsonSerializerOptions Options = new JsonSerializerOptions
         {
-            ContractResolver = new CamelCasePropertyNamesContractResolver
-            {
-                NamingStrategy = new CamelCaseNamingStrategy
-                {
-                    ProcessExtensionDataNames = true
-                }
-            }
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            PropertyNameCaseInsensitive = true
         };
-
-        private static JsonSerializer JsonSerializer = JsonSerializer.Create(
-            new JsonSerializerSettings
-            {
-                ContractResolver = new CamelCasePropertyNamesContractResolver
-                {
-                    NamingStrategy = new CamelCaseNamingStrategy
-                    {
-                        ProcessExtensionDataNames = true
-                    }
-                }
-            });
 
         private static readonly JsonMergeSettings ReplaceJsonMergeSettings = new JsonMergeSettings
         {
             MergeArrayHandling = MergeArrayHandling.Replace,
-            // TODO don't need this is we are pascal casing names first.
-            //PropertyNameComparison = StringComparison.OrdinalIgnoreCase
+            MergeNullValueHandling = MergeNullValueHandling.Merge
         };
 
         public static TDto ToDto<TDto>(this ContentElement content)
             where TDto : ContentElementDto
         {
-            var serialized = JObject.FromObject(content);
-            var deserialized = serialized.ToObject(typeof(TDto)) as TDto;
-            //deserialized.AdditionalPropertiesToCamelCase();
+            var serialized = JsonSerializer.SerializeToNode(content);
+            var deserialized = serialized?.Deserialize<TDto>(Options);
             return deserialized;
         }
 
-        /// <summary>
-        /// Returns a new instance of a content item from a dto
-        /// For use when working with items in bags.
-        /// Use with care: Will create a new instance if used and saved on a primary content item.
-        /// </summary>
         public static ContentItem ToContentItem(this ContentItemDto content)
         {
-            var serialized = JObject.FromObject(content);
-            var deserialized = serialized.ToObject<ContentItem>();
+            var serialized = JsonSerializer.SerializeToNode(content);
+            var deserialized = serialized?.Deserialize<ContentItem>(Options);
             return deserialized;
-        }        
+        }
 
-        //TODO a from ?
         public static TDto ToDto<TDto>(this ContentElementDto contentDto)
             where TDto : ContentElementDto
         {
-            var serialized = JObject.FromObject(contentDto);
-            var deserialized = serialized.ToObject(typeof(TDto)) as TDto;
-            //deserialized.AdditionalPropertiesToCamelCase();
+            var serialized = JsonSerializer.SerializeToNode(contentDto);
+            var deserialized = serialized?.Deserialize<TDto>(Options);
             return deserialized;
         }
 
@@ -105,24 +81,16 @@ namespace OrchardCore.ContentManagement
             return results;
         }
 
-        // TODO we don't have a merge for elements.
         public static ContentItem FromDto<TDto>(this ContentItem contentItem, TDto dto, JsonMergeSettings jsonMergeSettings = null)
             where TDto : ContentItemDto
         {
             if (dto == null)
             {
-                throw new ArgumentNullException();
+                throw new ArgumentNullException(nameof(dto));
             }
 
-            var jObject = JObject.FromObject(dto);
-            if (jsonMergeSettings == null)
-            {
-                return contentItem.Merge(jObject, ReplaceJsonMergeSettings);
-            }
-            else
-            {
-                return contentItem.Merge(jObject, jsonMergeSettings);
-            }
+            var jsonNode = JsonSerializer.SerializeToNode(dto);
+            return contentItem.Merge(jsonNode, jsonMergeSettings ?? ReplaceJsonMergeSettings);
         }
 
         internal static void AdditionalPropertiesToCamelCase(this ContentElementDto contentElementDto)

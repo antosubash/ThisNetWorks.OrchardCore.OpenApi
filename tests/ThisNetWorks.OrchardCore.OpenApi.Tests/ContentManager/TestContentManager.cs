@@ -63,6 +63,11 @@ namespace ThisNetWorks.OrchardCore.OpenApi.Tests.ContentManager
             throw new NotImplementedException();
         }
 
+        public Task<IEnumerable<ContentItem>> GetAllVersionsAsync(string contentItemId)
+        {
+            throw new NotImplementedException();
+        }
+
         public Task ImportAsync(IEnumerable<ContentItem> contentItems)
         {
             throw new NotImplementedException();
